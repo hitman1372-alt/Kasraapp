@@ -534,7 +534,7 @@ function pngFromInvoice(pre){
 }
 function applyPendingForm(){try{sessionStorage.removeItem('kasraCloneKeep')}catch(_){}const raw=load('kasraPendingForm',null);if(!raw)return;try{localStorage.removeItem('kasraPendingForm')}catch(_){}const f=typeof raw==='string'?JSON.parse(raw):raw;for(const id of FORM_IDS)if(id in f&&document.getElementById(id))document.getElementById(id).value=f[id];for(const id of FORM_CHECKS)if(id in f&&document.getElementById(id))document.getElementById(id).checked=f[id];try{const uc=document.getElementById('unitCount'),fl=document.getElementById('floors');if(fl&&fl.value!=='')floors=Math.min(200,Math.floor(num(fl.value))||0);if(uc&&uc.value!==''){unitCount=Math.min(MAX_UNITS,Math.floor(num(uc.value))||0);renderQuestionnaire()}}catch(_){}updatePreviewOnly()}
 let _archT=null;function scheduleArchive(){if(!archiveOn())return;clearTimeout(_archT);_archT=setTimeout(()=>{try{saveQuoteHistory(true)}catch(_){}},1500)}
-function dlBackupNow(){try{const o={ts:Date.now(),quotes:quoteHistory(),contracts:contractHistory(),sales:salesRows(),sigs:load('kasraSigsV1',{}),user:userName()};const bl=new Blob([JSON.stringify(o)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='kasra-backup-'+salesToday().s.replace(/\//g,'-')+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);safeSet('kasraLastDlBackup',String(Date.now()))}catch(_){}}
+function dlBackupNow(){try{const o={ts:Date.now(),quotes:quoteHistory(),contracts:contractHistory(),sales:salesRows(),sigs:load('kasraSigsV1',{}),user:userName()};const bl=new Blob([JSON.stringify(o)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(bl);const fn=backupFileName('kasra-backup');a.download=fn;recordBackup(fn,true);document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);safeSet('kasraLastDlBackup',String(Date.now()))}catch(_){}}
 (function(){const go=()=>{try{const l=Number(localStorage.getItem('kasraLastDlBackup')||0);if(Date.now()-l>864e5)dlBackupNow()}catch(_){}};document.addEventListener('click',go,{once:true,capture:true})})();
 function autoBackup(force){try{localStorage.removeItem('kasraAutoBackupV1')}catch(_){}return;const last=load('kasraAutoBackupV1',null),ts=last&&last.ts||0;if(!force&&Date.now()-ts<864e5)return;safeSet('kasraAutoBackupV1',JSON.stringify({ts:Date.now(),items:quoteHistory()}))}
 function restoreAutoBackup(){const b=load('kasraAutoBackupV1',null);if(!b||!Array.isArray(b.items)){alert('پشتیبان خودکاری وجود ندارد.');return}if(!confirm('بایگانی با پشتیبان خودکار ('+new Date(b.ts).toLocaleString('fa-IR')+') جایگزین شود؟'))return;safeSet(QUOTE_HISTORY_KEY,JSON.stringify(b.items));renderQuoteHistoryList()}
@@ -564,7 +564,7 @@ function openQuoteHistory(){
   box.innerHTML='<div style="background:#fff;color:#111;border-radius:10px;width:min(680px,100%);max-height:90vh;display:flex;flex-direction:column;padding:14px;font-family:Tahoma,Arial,sans-serif">'
    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">تاریخچه کاری</b><button type="button" id="qhClose">بستن</button></div>'
    +'<input id="qhSearch" placeholder="جستجو: نام مشتری، شماره یا تاریخ پیش‌فاکتور" style="margin:10px 0;padding:10px;font-size:16px;border:1px solid #bbb;border-radius:6px;width:100%;box-sizing:border-box"/>'
-   +'<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap"><button type="button" id="qhExport">ذخیره پشتیبان (فایل)</button><button type="button" id="qhImport">بازیابی از فایل</button><button type="button" id="qhAuto">بازیابی پشتیبان خودکار</button><button type="button" id="qhTrash">♻️ ریکاوری</button><input type="file" id="qhFile" accept="application/json,.json" style="display:none"></div>'
+   +'<div id="qhLast" style="font-size:13px;color:#555;margin-bottom:6px"></div><div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap"><button type="button" id="qhExport">ذخیره پشتیبان (فایل)</button><button type="button" id="qhImport">بازیابی از فایل</button><button type="button" id="qhTrash">♻️ ریکاوری</button><input type="file" id="qhFile" accept="application/json,.json" style="display:none"></div>'
    +'<div id="qhList" style="overflow:auto;flex:1"></div></div>';
   document.body.append(box);
   box.addEventListener('click',e=>{if(e.target===box)box.style.display='none'});
@@ -572,17 +572,15 @@ function openQuoteHistory(){
   
   document.getElementById('qhSearch').addEventListener('input',renderQuoteHistoryList);
   document.getElementById('qhExport').onclick=exportQuoteHistory;document.getElementById('qhTrash').onclick=()=>openTrash('q');
-  document.getElementById('qhAuto').onclick=restoreAutoBackup;document.getElementById('qhImport').onclick=()=>document.getElementById('qhFile').click();
+  document.getElementById('qhImport').onclick=()=>document.getElementById('qhFile').click();
   document.getElementById('qhFile').addEventListener('change',e=>importQuoteHistory(e.target.files[0]));
  }
- box.style.display='flex';document.getElementById('qhSearch').value='';renderQuoteHistoryList();
+ box.style.display='flex';document.getElementById('qhSearch').value='';renderQuoteHistoryList();showLastBackup();
 }
 function exportQuoteHistory(){
  const data={app:'kasra-quote-history',version:1,exported:new Date().toISOString(),items:quoteHistory()};
- const a=document.createElement('a');
- a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data));
- a.download='kasra-quote-history-'+new Date().toISOString().slice(0,10)+'.json';
- document.body.append(a);a.click();a.remove();
+ const fn=backupFileName('kasra-quote-history');
+ downloadJson(data,fn,false);
 }
 function importQuoteHistory(file){
  if(!file)return;
@@ -722,23 +720,22 @@ function openContractHistory(){
   box.innerHTML='<div style="background:#fff;color:#111;border-radius:10px;width:min(680px,100%);max-height:90vh;display:flex;flex-direction:column;padding:14px;font-family:Tahoma,Arial,sans-serif">'
    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">بایگانی قراردادها</b><button type="button" id="chClose">بستن</button></div>'
    +'<input id="chSearch" placeholder="جستجو: نام مشتری، شماره یا تاریخ قرارداد" style="margin:10px 0;padding:10px;font-size:16px;border:1px solid #bbb;border-radius:6px;width:100%;box-sizing:border-box"/>'
-   +'<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap"><button type="button" id="chExport">ذخیره پشتیبان (فایل)</button><button type="button" id="chImport">بازیابی از فایل</button><button type="button" id="chAuto">بازیابی پشتیبان خودکار</button><button type="button" id="chTrash">♻️ ریکاوری</button><input type="file" id="chFile" accept="application/json,.json" style="display:none"></div>'
+   +'<div id="chLast" style="font-size:13px;color:#555;margin-bottom:6px"></div><div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap"><button type="button" id="chExport">ذخیره پشتیبان (فایل)</button><button type="button" id="chImport">بازیابی از فایل</button><button type="button" id="chTrash">♻️ ریکاوری</button><input type="file" id="chFile" accept="application/json,.json" style="display:none"></div>'
    +'<div id="chList" style="overflow:auto;flex:1"></div></div>';
   document.body.append(box);
   box.addEventListener('click',e=>{if(e.target===box)box.style.display='none'});
   document.getElementById('chClose').onclick=()=>box.style.display='none';
   document.getElementById('chSearch').addEventListener('input',renderContractHistoryList);
   document.getElementById('chExport').onclick=exportContractHistory;document.getElementById('chTrash').onclick=()=>openTrash('c');
-  document.getElementById('chAuto').onclick=restoreContractAutoBackup;
   document.getElementById('chImport').onclick=()=>document.getElementById('chFile').click();
   document.getElementById('chFile').addEventListener('change',e=>importContractHistory(e.target.files[0]));
  }
- box.style.display='flex';document.getElementById('chSearch').value='';renderContractHistoryList();
+ box.style.display='flex';document.getElementById('chSearch').value='';renderContractHistoryList();showLastBackup();
 }
 function exportContractHistory(){
  const data={app:'kasra-contract-history',version:1,exported:new Date().toISOString(),items:contractHistory()};
- const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data));
- a.download='kasra-contracts-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(a);a.click();a.remove();
+ const fn=backupFileName('kasra-contracts');
+ downloadJson(data,fn,false);
 }
 function contractAutoBackup(){try{localStorage.removeItem('kasraContractAutoBackupV1');return;const last=load('kasraContractAutoBackupV1',null);if(last&&Date.now()-(last.ts||0)<864e5)return;safeSet('kasraContractAutoBackupV1',JSON.stringify({ts:Date.now(),items:contractHistory()}))}catch(_){}}
 function restoreContractAutoBackup(){const b=load('kasraContractAutoBackupV1',null);if(!b||!Array.isArray(b.items)){alert('پشتیبان خودکاری وجود ندارد.');return}if(!confirm('بایگانی قراردادها با پشتیبان خودکار ('+new Date(b.ts).toLocaleString('fa-IR')+') جایگزین شود؟'))return;safeSet(CONTRACT_HISTORY_KEY,JSON.stringify(b.items));renderContractHistoryList()}
@@ -1227,8 +1224,13 @@ document.addEventListener('pointerdown',e=>{const m=document.getElementById('mai
   window[n]=function(){closePages();if(window.hideWizard)hideWizard();var r=o.apply(this,arguments);inlinePage();return r};
  });
 })();
-const APP_VERSION='1.1.0';
+function backupFileName(base){const d=new Date(),p=n=>String(n).padStart(2,'0');return base+'-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+'.json'}
+function recordBackup(name,auto){try{localStorage.setItem('kasraLastBackupV1',JSON.stringify({ts:Date.now(),name:name,auto:!!auto}))}catch(_){}}
+function downloadJson(data,fn,auto){const bl=new Blob([JSON.stringify(data)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=fn;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);recordBackup(fn,auto);showLastBackup();alert('فایل بکاپ ذخیره شد.\n\nنام فایل: '+fn+'\nپسوند: .json\nمحل ذخیره: پوشه Download (دانلودها) گوشی، مگر اینکه مرورگر شما مسیر دیگری تنظیم کرده باشد.')}
+function showLastBackup(){const b=load('kasraLastBackupV1',null);const t=!b?'آخرین بکاپ: هنوز بکاپی گرفته نشده':'آخرین بکاپ: '+new Date(b.ts).toLocaleDateString('fa-IR')+' ساعت '+new Date(b.ts).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(b.auto?' (خودکار)':' (دستی)')+' — فایل: '+b.name;['qhLast','chLast'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t})}
+const APP_VERSION='1.2.0';
 const CHANGELOG=[
+{v:'1.2.0',d:'1405/09/04',c:['حذف دکمه «بازیابی پشتیبان خودکار» از بایگانی‌ها','بعد از گرفتن بکاپ، نام فایل و محل ذخیره (پوشه Download) نمایش داده می‌شود','متن «آخرین بکاپ» (زمان، نوع دستی/خودکار و نام فایل) در بایگانی‌ها','نام فایل بکاپ شامل تاریخ و ساعت شد']},
 {v:'1.1.0',d:'1405/09/04',c:['تغییر نام برنامه و آیکون به KASRA','دکمه خروج: سؤال تأیید دارد','اضافه شدن «مجتبی یعقوبلو» به نام‌های مجاز ورود','اضافه شدن بخش «نسخه و تغییرات» به منو']}
 ];
 function showChangelog(force){
