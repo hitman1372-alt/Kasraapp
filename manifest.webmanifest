@@ -1,6 +1,6 @@
 {
-  "name": "پیش‌فاکتور کسری",
-  "short_name": "کسری",
+  "name": "KASRA",
+  "short_name": "KASRA",
   "start_url": "./kasra_quote_builder_pro_v16.html",
   "scope": "./",
   "display": "standalone",
