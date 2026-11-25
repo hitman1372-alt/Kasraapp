@@ -155,7 +155,9 @@
 }
 @media screen and (min-width:900px){
 main.wrap > .grid{grid-template-columns:minmax(0,1fr)!important}
-main.wrap{max-width:1600px!important;width:96%!important;margin-left:auto!important;margin-right:auto!important}
+html{font-size:18px}body{font-size:18px}.panel{min-height:calc(100vh - 230px)}.panel input,.panel select,.panel textarea,.panel label,.panel p,.panel .check{font-size:18px!important}.panel input,.panel select{padding:11px!important}.panel h2{font-size:24px!important}
+.step-nav{justify-content:flex-start!important}.step-nav button{flex:0 0 auto!important;min-width:150px;max-width:200px;padding:12px 26px!important;font-size:17px!important}
+main.wrap{max-width:none!important;width:98%!important;margin-left:auto!important;margin-right:auto!important}
 .panel .fields{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))!important}.panel .checks{grid-template-columns:1fr 1fr 1fr!important}.panel{padding:20px 26px!important}
 .panel .checks{grid-template-columns:1fr 1fr!important;column-gap:16px}
 .panel .qbox,.panel .optionbox{padding:6px 0!important}
@@ -1229,8 +1231,9 @@ function backupFileName(base){const d=new Date(),p=n=>String(n).padStart(2,'0');
 function recordBackup(name,auto){try{localStorage.setItem('kasraLastBackupV1',JSON.stringify({ts:Date.now(),name:name,auto:!!auto}))}catch(_){}}
 function downloadJson(data,fn,auto){const bl=new Blob([JSON.stringify(data)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=fn;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);recordBackup(fn,auto);showLastBackup();alert('فایل بکاپ ذخیره شد.\n\nنام فایل: '+fn+'\nپسوند: .json\nمحل ذخیره: پوشه Download (دانلودها) گوشی، مگر اینکه مرورگر شما مسیر دیگری تنظیم کرده باشد.')}
 function showLastBackup(){const b=load('kasraLastBackupV1',null);const t=!b?'آخرین بکاپ: هنوز بکاپی گرفته نشده':'آخرین بکاپ: '+new Date(b.ts).toLocaleDateString('fa-IR')+' ساعت '+new Date(b.ts).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(b.auto?' (خودکار)':' (دستی)')+' — فایل: '+b.name;['qhLast','chLast'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t})}
-const APP_VERSION='1.3.2';
+const APP_VERSION='1.3.3';
 const CHANGELOG=[
+{v:'1.3.3',d:'1405/09/04',c:['دسکتاپ: عرض و ارتفاع صفحه‌ها بیشتر شد، فونت‌ها بزرگ‌تر، دکمه‌های قبلی/بعدی جمع‌وجور']},
 {v:'1.3.2',d:'1405/09/04',c:['دسکتاپ: صفحه‌ها و فرم‌ها عریض‌تر شدند و کل صفحهٔ مانیتور را پر می‌کنند','منو بزرگ‌تر شد']},
 {v:'1.3.1',d:'1405/09/04',c:['امضای واحد فروش در پیش‌فاکتور و تصویر PNG به نام کاربر وارد‌شده نوشته می‌شود (دیگر نام ثابت نیست)']},
 {v:'1.3.0',d:'1405/09/04',c:['اصلاح نمایش منو و صفحه‌ها در کامپیوتر (منو باریک و کنار دکمه، برنامه هم‌تراز هدر)']},
