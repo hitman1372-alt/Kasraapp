@@ -1,4 +1,4 @@
-const CACHE='kasra-quote-v131';
+const CACHE='kasra-quote-v132';
 const FILES=['./','./kasra_quote_builder_pro_v16.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});
