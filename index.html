@@ -922,9 +922,18 @@ function sigPad(m,done,cancel){
   const o=document.createElement('canvas');o.width=cv.width;o.height=cv.height;o.getContext('2d').drawImage(cv,0,0);
   const k=Math.min(1,500/Math.max(o.width,o.height)),c=document.createElement('canvas');c.width=Math.round(o.width*k);c.height=Math.round(o.height*k);c.getContext('2d').drawImage(o,0,0,c.width,c.height);
   const mm=load(SIGS_KEY,{});mm[m]=c.toDataURL('image/png');safeSet(SIGS_KEY,JSON.stringify(mm));ov.remove();applyMySig();done&&done()}}
+function prefixGate(m,done){
+ const U=String(m||'').trim();let P={};try{P=JSON.parse(localStorage.getItem('kasraPrefixV1')||'{}')||{}}catch(_){}
+ if(!U||P[U]||U==='وحید محمدتقی')return done();
+ const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#123b35;display:flex;align-items:center;justify-content:center;padding:14px;font-family:Tahoma,sans-serif;direction:rtl';
+ ov.innerHTML='<div style="background:#fff;border-radius:14px;padding:18px;width:100%;max-width:480px;box-sizing:border-box"><h2 style="margin:0 0 8px;font-size:19px;color:#123b35">پیشوند شماره قرارداد</h2><p style="margin:0 0 8px;font-size:14px;line-height:1.8">پیشوند شماره قرارداد شما چیست؟ مثلاً 6000. شماره قرارداد به این شکل ساخته می‌شود: پیشوند/تاریخ/شماره ردیف.</p><input id="pfN" inputmode="numeric" style="width:100%;padding:12px;font-size:17px;border:1px solid #999;border-radius:8px;box-sizing:border-box" autocomplete="off"><div id="pfE" style="color:#b3261e;margin-top:6px;font-size:14px"></div><button id="pfOk" style="width:100%;padding:13px;font-size:16px;border:0;border-radius:10px;color:#fff;margin-top:10px;background:#2e7d32;font-family:inherit">ذخیره و ادامه</button></div>';
+ document.body.appendChild(ov);
+ ov.querySelector('#pfOk').onclick=()=>{const v=ov.querySelector('#pfN').value.replace(/\D/g,'');if(!v){ov.querySelector('#pfE').textContent='پیشوند را وارد کنید.';return}
+  let Q={};try{Q=JSON.parse(localStorage.getItem('kasraPrefixV1')||'{}')||{}}catch(_){}Q[U]=v;safeSet('kasraPrefixV1',JSON.stringify(Q));ov.remove();done()};
+}
 function loginGate(){
  const n=matchUser(userName()),has=n&&sigFor(n);
- if(n&&has){if(n!==userName())safeSet(USER_KEY,n);applyMySig();return}
+ if(n&&has){if(n!==userName())safeSet(USER_KEY,n);applyMySig();prefixGate(n,()=>{});return}
  const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#123b35;display:flex;align-items:center;justify-content:center;padding:14px;font-family:Tahoma,sans-serif;direction:rtl';
  ov.innerHTML='<div style="background:#fff;border-radius:14px;padding:18px;width:100%;max-width:480px;box-sizing:border-box"><h2 style="margin:0 0 10px;font-size:19px;color:#123b35" id="lgT"></h2><div id="lgB"></div></div>';
  document.body.appendChild(ov);const T=ov.querySelector('#lgT'),B=ov.querySelector('#lgB');
@@ -934,7 +943,7 @@ function loginGate(){
   B.querySelector('#lgOk').onclick=()=>{const m=matchUser(B.querySelector('#lgN').value);if(!m){B.querySelector('#lgE').textContent='این نام مجاز نیست. نام را دقیقاً وارد کنید.';return}stepPass(m)}}
  function stepPass(m){T.textContent='رمز ورود را وارد کنید';B.innerHTML='<input id="lgP" type="password" inputmode="text" style="'+is+'" autocomplete="off"><div id="lgE" style="color:#b3261e;margin-top:6px;font-size:14px"></div><button id="lgOk" style="'+bs+';background:#2e7d32">ورود</button><button id="lgBk" style="'+bs+';background:#666">بازگشت</button>';
   B.querySelector('#lgBk').onclick=stepName;
-  B.querySelector('#lgOk').onclick=()=>{if(!passOk(m,B.querySelector('#lgP').value)){B.querySelector('#lgE').textContent='رمز اشتباه است.';return}safeSet(USER_KEY,m);try{localStorage.setItem(USER_KEY,m)}catch(_){}if(sigFor(m))return fin();ov.style.display='none';sigPad(m,()=>{ov.remove()},()=>{ov.style.display='flex'})}}
+  B.querySelector('#lgOk').onclick=()=>{if(!passOk(m,B.querySelector('#lgP').value)){B.querySelector('#lgE').textContent='رمز اشتباه است.';return}safeSet(USER_KEY,m);try{localStorage.setItem(USER_KEY,m)}catch(_){}if(sigFor(m))return prefixGate(m,fin);ov.style.display='none';sigPad(m,()=>{ov.remove();prefixGate(m,()=>{})},()=>{ov.style.display='flex'})}}
  stepName()}
 async function openMySignature(){
  const n=matchUser(userName());if(!n){alert('ابتدا باید وارد برنامه شوید.');return}
@@ -1238,8 +1247,9 @@ function backupFileName(base){const d=new Date(),p=n=>String(n).padStart(2,'0');
 function recordBackup(name,auto){try{localStorage.setItem('kasraLastBackupV1',JSON.stringify({ts:Date.now(),name:name,auto:!!auto}))}catch(_){}}
 function downloadJson(data,fn,auto){const bl=new Blob([JSON.stringify(data)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=fn;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);recordBackup(fn,auto);showLastBackup();alert('فایل بکاپ ذخیره شد.\n\nنام فایل: '+fn+'\nپسوند: .json\nمحل ذخیره: پوشه Download (دانلودها) گوشی، مگر اینکه مرورگر شما مسیر دیگری تنظیم کرده باشد.')}
 function showLastBackup(){const b=load('kasraLastBackupV1',null);const t=!b?'آخرین بکاپ: هنوز بکاپی گرفته نشده':'آخرین بکاپ: '+new Date(b.ts).toLocaleDateString('fa-IR')+' ساعت '+new Date(b.ts).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(b.auto?' (خودکار)':' (دستی)')+' — فایل: '+b.name;['qhLast','chLast'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t})}
-const APP_VERSION='1.3.5';
+const APP_VERSION='1.3.6';
 const CHANGELOG=[
+{v:'1.3.6',d:'1405/09/04',c:['ورود: بعد از ورود، پیشوند شماره قرارداد پرسیده می‌شود (اگر قبلاً ثبت نشده باشد)']},
 {v:'1.3.5',d:'1405/09/04',c:['انتخاب دستگاه: تعداد با دکمه‌های + و − تغییر می‌کند و ورودی کوچک‌تر شد']},
 {v:'1.3.4',d:'1405/09/04',c:['موبایل: هدر و فاصله‌ها فشرده شد تا دکمهٔ بعدی بدون اسکرول بیشتر دیده شود']},
 {v:'1.3.3',d:'1405/09/04',c:['دسکتاپ: عرض و ارتفاع صفحه‌ها بیشتر شد، فونت‌ها بزرگ‌تر، دکمه‌های قبلی/بعدی جمع‌وجور']},
