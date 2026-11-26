@@ -200,7 +200,7 @@ for(const k of BIGK){let a=[],b=[],c=[];try{const v=await idbGet(k);if(v)a=JSON.
 const m=JSON.stringify(bigMerge([a,b,c]));await idbPut(k,m);BIGC[k]=m;try{localStorage.removeItem(k)}catch(_){}}}catch(e){IDBH=null}})();
 var CLOUD_URL='https://polished-water-4304.hitman-1372.workers.dev/',_cT=null,_cLast={};
 function cloudQueue(k){if(['kasraContractHistoryV1','kasraQuoteHistoryV1','kasraVisitsV1'].indexOf(k)<0)return;clearTimeout(_cT);_cT=setTimeout(cloudSync,8000)}
-var S3H='gift.nodrive.ir',S3B='09391923535main',S3A='kYUjG5HbecHu1FFyXQ2M',S3S='EzWSKR86qqtBBNdCIXIzvQH4bf9ezdaCkHVsPDyC';
+var S3H='gift.nodrive.ir',S3B='09391923535main',S3A='g62gcdU0yUvmmgsEnCCK',S3S='s3rzsPb5cOQOE6KZ1nWipZjOwhIy4RNUNPjal12O';
 async function _hm(k,d){const K=await crypto.subtle.importKey('raw',k,{name:'HMAC',hash:'SHA-256'},false,['sign']);return new Uint8Array(await crypto.subtle.sign('HMAC',K,new TextEncoder().encode(d)))}
 function _hx(b){return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 async function cloudReq(method,name,body,ct,q){q=q||'';const ph=_hx(await crypto.subtle.digest('SHA-256',body||new Uint8Array(0))),path='/'+S3B+'/Kasra/'+name.split('/').map(encodeURIComponent).join('/'),amz=new Date().toISOString().replace(/[-:]|\.\d{3}/g,''),ds=amz.slice(0,8),sh=(ct?'content-type;':'')+'host;x-amz-content-sha256;x-amz-date',can=[method,(name==='?'?'/'+S3B:path),q,(ct?'content-type:'+ct:null),'host:'+S3H,'x-amz-content-sha256:'+ph,'x-amz-date:'+amz,'',sh,ph].filter(x=>x!==null).join('\n'),sc=ds+'/us-east-1/s3/aws4_request',sts=['AWS4-HMAC-SHA256',amz,sc,_hx(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(can)))].join('\n');let k=await _hm(new TextEncoder().encode('AWS4'+S3S),ds);k=await _hm(k,'us-east-1');k=await _hm(k,'s3');k=await _hm(k,'aws4_request');const sig=_hx(await _hm(k,sts));const hd={'x-amz-content-sha256':ph,'x-amz-date':amz,'Authorization':'AWS4-HMAC-SHA256 Credential='+S3A+'/'+sc+', SignedHeaders='+sh+', Signature='+sig};if(ct)hd['Content-Type']=ct;return fetch('https://'+S3H+(name==='?'?'/'+S3B:path)+(q?'?'+q:''),{method,body:body||undefined,headers:hd})}
@@ -1314,8 +1314,9 @@ function backupFileName(base){const d=new Date(),p=n=>String(n).padStart(2,'0');
 function recordBackup(name,auto){try{localStorage.setItem('kasraLastBackupV1',JSON.stringify({ts:Date.now(),name:name,auto:!!auto}))}catch(_){}}
 function downloadJson(data,fn,auto){const bl=new Blob([JSON.stringify(data)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=fn;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);recordBackup(fn,auto);showLastBackup();alert('فایل بکاپ ذخیره شد.\n\nنام فایل: '+fn+'\nپسوند: .json\nمحل ذخیره: پوشه Download (دانلودها) گوشی، مگر اینکه مرورگر شما مسیر دیگری تنظیم کرده باشد.')}
 function showLastBackup(){const b=load('kasraLastBackupV1',null);const t=!b?'آخرین بکاپ: هنوز بکاپی گرفته نشده':'آخرین بکاپ: '+new Date(b.ts).toLocaleDateString('fa-IR')+' ساعت '+new Date(b.ts).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(b.auto?' (خودکار)':' (دستی)')+' — فایل: '+b.name;['qhLast','chLast'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t})}
-const APP_VERSION='1.4.3';
+const APP_VERSION='1.4.4';
 const CHANGELOG=[
+{v:'1.4.4',d:'1405/09/06',c:['کلید ابری به‌روزرسانی شد']},
 {v:'1.4.3',d:'1405/09/05',c:['ورود با نام و رمز با تأیید از ابر','رمز اولیه برای کاربران جدید تغییر اجباری است','ورود بدون اینترنت با آخرین رمز همین دستگاه']},
 {v:'1.4.2',d:'1405/09/05',c:['تغییرات جزئی برای بهبود برنامه کسری']},
 {v:'1.4.1',d:'1405/09/05',c:['تغییرات جزئی برای بهبود برنامه کسری']},
