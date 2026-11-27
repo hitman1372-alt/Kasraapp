@@ -921,9 +921,9 @@ async function selfSigBlock(x,left,fy){const n=userName();if(!n)return 0;const g
  x.fillStyle='#111';x.fillText('امضا:',cx,fy-190);if(im)x.drawImage(im,cx-iw/2,fy-160,iw,hh);x.fillText(n,cx,fy+10);return bw}
 function sigFor(name){const n=String(name||'').trim();const m=load(SIGS_KEY,{});if(m&&m[n])return m[n];if(n==='وحید محمدتقی'){const el=document.querySelector('.manager-sig')||(window.opener&&window.opener.document&&window.opener.document.querySelector('.manager-sig'));if(el&&el.src)return el.src}return ''}
 
-const ALLOWED_USERS=['جواد زند','احد زمانپور','وحید محمدتقی','امید کرمی','صالح نیکرخ','نسرین روزبهی','فاطمه رحمانی','مجتبی یعقوبلو','امیرحسین حمدیان','امیر پیرعلی','شادمان','درخشان','محمدی','عباسی','علی خجیر','میرزا ابراهیمی','محمد لالانی','حسین ایمانی'];
+const ALLOWED_USERS=['جواد زند','احد زمانپور','وحید محمدتقی','امید کرمی','صالح نیکرخ','نسرین روزبهی','فاطمه رحمانی','مجتبی یعقوبلو','امیرحسین حمدیان','امیر پیرعلی','شادمان','درخشان','محمدی','عباسی','علی خجیر','میرزا ابراهیمی','محمد لالانی','حسین ایمانی','سلطانی','رهنما'];
 // دسته‌بندی کاربران: creator=سازنده، sales_mgr=مدیر فروش، ceo=مدیرعامل، support=کارشناس فروش و پشتیبان، ad=تبلیغات، finance=مالی، drivers=رانندگان، hr=منابع انسانی (بدون منو)
-const ROLE_OF={'وحید محمدتقی':'creator','جواد زند':'sales_mgr','احد زمانپور':'sales_mgr','صالح نیکرخ':'sales_mgr','امید کرمی':'sales_mgr','امیر پیرعلی':'sales_mgr','مجتبی یعقوبلو':'ceo','امیرحسین حمدیان':'support','نسرین روزبهی':'support','فاطمه رحمانی':'support','شادمان':'ad','درخشان':'ad','محمدی':'finance','عباسی':'finance','علی خجیر':'drivers','میرزا ابراهیمی':'drivers','محمد لالانی':'hr','حسین ایمانی':'facilities'};
+const ROLE_OF={'وحید محمدتقی':'creator','جواد زند':'sales_mgr','احد زمانپور':'sales_mgr','صالح نیکرخ':'sales_mgr','امید کرمی':'sales_mgr','امیر پیرعلی':'sales_mgr','مجتبی یعقوبلو':'ceo','امیرحسین حمدیان':'support','نسرین روزبهی':'support','فاطمه رحمانی':'support','شادمان':'ad','درخشان':'ad','محمدی':'finance','عباسی':'finance','علی خجیر':'drivers','میرزا ابراهیمی':'drivers','محمد لالانی':'hr','حسین ایمانی':'facilities_head','سلطانی':'facilities','رهنما':'warehouse'};
 
 function kMergeInto(k,arr){if(!Array.isArray(arr))return 0;const cur=load(k,[])||[];let out;if(k==='kasraVisitsV1'){const m=new Map();cur.concat(arr).forEach(x=>m.set(JSON.stringify(x),x));out=[...m.values()]}else out=bigMerge([cur,arr]);safeSet(k,JSON.stringify(out));return arr.length}
 function kKindOf(n,a){n=String(n||'');if(/contracts/.test(n))return 'kasraContractHistoryV1';if(/proformas/.test(n))return 'kasraQuoteHistoryV1';if(/visits/.test(n))return 'kasraVisitsV1';const x=(a||[])[0]||{};if(x.html||x.pages)return x.number&&x.signed!==undefined?'kasraContractHistoryV1':'kasraQuoteHistoryV1';return ''}
@@ -949,7 +949,7 @@ async function openCloudRestore(){
 function roleOf(){return ROLE_OF[userName()]||''}
 function canSeeSales(){const r=roleOf();return r==='creator'||r==='sales_mgr'||r==='ceo'}
 function canSeeVisits(){return canSeeSales()}
-function applyRoleUI(){const b=document.body.classList;b.toggle('role-creator',roleOf()==='creator');b.toggle('no-sales',!canSeeSales());b.toggle('no-visit',!canSeeVisits());b.toggle('role-arch',roleOf()==='finance'||roleOf()==='facilities');b.toggle('role-none',!roleOf()||['ad','finance','drivers','hr','facilities'].indexOf(roleOf())>=0)}
+function applyRoleUI(){const b=document.body.classList;b.toggle('role-creator',roleOf()==='creator');b.toggle('no-sales',!canSeeSales());b.toggle('no-visit',!canSeeVisits());b.toggle('role-arch',['finance','facilities','facilities_head','warehouse'].indexOf(roleOf())>=0);b.toggle('role-none',!roleOf()||['ad','finance','drivers','hr','facilities','facilities_head'].indexOf(roleOf())>=0)}
 function normName(v){return String(v||'').replace(/[\u200c\s]+/g,'').replace(/ي/g,'ی').replace(/ك/g,'ک')}
 function matchUser(v){const k=normName(v);return ALLOWED_USERS.find(n=>normName(n)===k)||''}
 function applyMySig(){try{const g=sigFor(userName());if(g)document.querySelectorAll('.manager-sig').forEach(e=>{e.src=g})}catch(_){}}
@@ -1325,9 +1325,9 @@ function backupFileName(base){const d=new Date(),p=n=>String(n).padStart(2,'0');
 function recordBackup(name,auto){try{localStorage.setItem('kasraLastBackupV1',JSON.stringify({ts:Date.now(),name:name,auto:!!auto}))}catch(_){}}
 function downloadJson(data,fn,auto){const bl=new Blob([JSON.stringify(data)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=fn;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);recordBackup(fn,auto);showLastBackup();alert('فایل بکاپ ذخیره شد.\n\nنام فایل: '+fn+'\nپسوند: .json\nمحل ذخیره: پوشه Download (دانلودها) گوشی، مگر اینکه مرورگر شما مسیر دیگری تنظیم کرده باشد.')}
 function showLastBackup(){const b=load('kasraLastBackupV1',null);const t=!b?'آخرین بکاپ: هنوز بکاپی گرفته نشده':'آخرین بکاپ: '+new Date(b.ts).toLocaleDateString('fa-IR')+' ساعت '+new Date(b.ts).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(b.auto?' (خودکار)':' (دستی)')+' — فایل: '+b.name;['qhLast','chLast'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t})}
-const APP_VERSION='1.5.4';
+const APP_VERSION='1.5.5';
 const CHANGELOG=[
-{v:'1.5.4',d:'1405/09/06',c:['کارتابل هنگام باز بودن صفحه‌ها به نوار بالای همان صفحه (سمت چپ) منتقل می‌شود','نمایش وضعیت فعلی ارجاع مستقیم در بایگانی قراردادها با دکمه نارنجی']},{v:'1.5.3',d:'1405/09/06',c:['نمایش وضعیت فعلی ارجاع مستقیم در بایگانی قراردادها با دکمه نارنجی','جزئیات وضعیت با زدن روی همان دکمه']},{v:'1.5.2',d:'1405/09/06',c:['اصلاح نمایش بایگانی در منوی مالی','جزئیات وضعیت ارجاع: واحد، زمان ارسال و تعداد صف قبلی']},{v:'1.5.1',d:'1405/09/06',c:['پیشوند شماره قرارداد فقط برای مدیران فروش','نمایش بایگانی برای مالی و تاسیسات','علامت ✅ و دکمه مشاهده وضعیت بعد از ارجاع','ثبت تاریخ قرارداد هنگام آپلود امضای خریدار','تاسیسات فقط اطلاعات پروژه را می‌بیند','انتقال دکمه کارتابل به زیر هدر']},{v:'1.5.0',d:'1405/09/06',c:['اضافه شدن «کارتابل» در بالای صفحه سمت چپ','ارجاع قرارداد امضاشده همراه با فیش واریزی به واحد مالی از بایگانی قراردادها','ارجاع واحد مالی به واحد تاسیسات و نمایش سوابق هر ارجاع','اضافه شدن دسته تاسیسات (حسین ایمانی)']},{v:'1.4.6',d:'1405/09/06',c:['شمارشگر تعداد طبقات و واحدها هم‌تراز با متن کنار خود شد','دکمه «بستن» پنجره نسخه و تغییرات به بالای پنجره منتقل شد','در تصویر گزارش وصولی‌ها و گزارش بازدیدها، نام و امضای کاربر سمت چپ درج می‌شود','ترتیب امضا در تصویرها: متن امضا، تصویر امضا، نام و نام خانوادگی']},{v:'1.4.5',d:'1405/09/06',c:['فاصله دکمه‌های افزایش و کاهش تعداد کم شد','پس از تغییر رمز، یک بار با رمز جدید وارد شوید','چیدمان دکمه‌ها در گزارش وصولی‌ها و گزارش بازدیدها اصلاح شد']},{v:'1.4.4',d:'1405/09/06',c:['کلید ابری به‌روزرسانی شد']},
+{v:'1.5.5',d:'1405/09/07',c:['تفکیک تاسیسات به سرپرست (حسین ایمانی) و کارشناس (سلطانی)','واحد انبار و لجستیک (رهنما) بین مالی و تاسیسات با نمایش تولیدکننده و تعداد اقلام']},{v:'1.5.4',d:'1405/09/06',c:['کارتابل هنگام باز بودن صفحه‌ها به نوار بالای همان صفحه (سمت چپ) منتقل می‌شود','نمایش وضعیت فعلی ارجاع مستقیم در بایگانی قراردادها با دکمه نارنجی']},{v:'1.5.3',d:'1405/09/06',c:['نمایش وضعیت فعلی ارجاع مستقیم در بایگانی قراردادها با دکمه نارنجی','جزئیات وضعیت با زدن روی همان دکمه']},{v:'1.5.2',d:'1405/09/06',c:['اصلاح نمایش بایگانی در منوی مالی','جزئیات وضعیت ارجاع: واحد، زمان ارسال و تعداد صف قبلی']},{v:'1.5.1',d:'1405/09/06',c:['پیشوند شماره قرارداد فقط برای مدیران فروش','نمایش بایگانی برای مالی و تاسیسات','علامت ✅ و دکمه مشاهده وضعیت بعد از ارجاع','ثبت تاریخ قرارداد هنگام آپلود امضای خریدار','تاسیسات فقط اطلاعات پروژه را می‌بیند','انتقال دکمه کارتابل به زیر هدر']},{v:'1.5.0',d:'1405/09/06',c:['اضافه شدن «کارتابل» در بالای صفحه سمت چپ','ارجاع قرارداد امضاشده همراه با فیش واریزی به واحد مالی از بایگانی قراردادها','ارجاع واحد مالی به واحد تاسیسات و نمایش سوابق هر ارجاع','اضافه شدن دسته تاسیسات (حسین ایمانی)']},{v:'1.4.6',d:'1405/09/06',c:['شمارشگر تعداد طبقات و واحدها هم‌تراز با متن کنار خود شد','دکمه «بستن» پنجره نسخه و تغییرات به بالای پنجره منتقل شد','در تصویر گزارش وصولی‌ها و گزارش بازدیدها، نام و امضای کاربر سمت چپ درج می‌شود','ترتیب امضا در تصویرها: متن امضا، تصویر امضا، نام و نام خانوادگی']},{v:'1.4.5',d:'1405/09/06',c:['فاصله دکمه‌های افزایش و کاهش تعداد کم شد','پس از تغییر رمز، یک بار با رمز جدید وارد شوید','چیدمان دکمه‌ها در گزارش وصولی‌ها و گزارش بازدیدها اصلاح شد']},{v:'1.4.4',d:'1405/09/06',c:['کلید ابری به‌روزرسانی شد']},
 {v:'1.4.3',d:'1405/09/05',c:['ورود با نام و رمز با تأیید از ابر','رمز اولیه برای کاربران جدید تغییر اجباری است','ورود بدون اینترنت با آخرین رمز همین دستگاه']},
 {v:'1.4.2',d:'1405/09/05',c:['تغییرات جزئی برای بهبود برنامه کسری']},
 {v:'1.4.1',d:'1405/09/05',c:['تغییرات جزئی برای بهبود برنامه کسری']},
@@ -1362,13 +1362,13 @@ const UNIT_NOW=r=>r.status==='done'?'تکمیل شده':'نزد '+(UNIT_FA[r.to]
 async function refStatus(id){const b=ovBox('وضعیت ارجاع');b.c.textContent='در حال بارگذاری...';const a=await refLoad();b.c.innerHTML='';const r=a&&a.find(y=>y.id===id);if(!r){b.c.textContent='اطلاعاتی یافت نشد (اتصال اینترنت را بررسی کنید).';return}
  const t=document.createElement('div');t.style.cssText='font-weight:bold;padding:8px;background:#e7f2ec;border-radius:8px;line-height:2';const q=a.filter(y=>y.to==='finance'&&y.status==='pending'&&y.id!==r.id&&(y.ts||0)<(r.ts||0)).length;t.innerHTML='وضعیت فعلی: '+UNIT_NOW(r)+'<br>زمان ارسال به مالی: '+fdate(r.ts)+(r.to==='finance'&&r.status==='pending'?'<br>تعداد پرونده‌های انجام‌نشده قبل از این در صف مالی: '+q:'');b.c.append(t);(r.log||[]).forEach(l=>{const d=document.createElement('div');d.style.cssText='padding:6px 0;border-bottom:1px solid #eee;font-size:13px';d.textContent=fdate(l.at)+' — '+l.by+': '+l.t;b.c.append(d)})}
 async function openUnitArchive(){const b=ovBox('بایگانی قراردادها');b.c.textContent='در حال بارگذاری...';const a=await refLoad();b.c.innerHTML='';if(a===null){b.c.textContent='اتصال به سرور برقرار نشد.';return}
- const u=myUnit();const l=a.filter(x=>u==='finance'||x.to==='facilities'||(x.log||[]).some(z=>/تاسیسات/.test(z.t)));if(!l.length)b.c.textContent='موردی نیست.';
+ const u=myUnit();const l=a.filter(x=>u==='finance'||u==='warehouse'||x.to==='facilities'||(x.log||[]).some(z=>/تاسیسات/.test(z.t)));if(!l.length)b.c.textContent='موردی نیست.';
  l.forEach(r=>{const d=document.createElement('div');d.style.cssText='border:1px solid #ddd;border-radius:8px;padding:10px;margin-top:8px';const t=document.createElement('div');t.textContent='قرارداد '+(r.no||'—')+' — '+(r.customer||'')+' | '+UNIT_NOW(r);d.append(t);
   const k=document.createElement('button');k.type='button';k.textContent='مشاهده';k.style.cssText='padding:10px;width:100%;margin-top:6px';k.onclick=()=>{u==='finance'?openRef(r,()=>{b.o.remove();openUnitArchive()}):openInfo(r)};d.append(k);
   if(u==='finance'){const s2=document.createElement('button');s2.type='button';s2.textContent='مشاهده وضعیت';s2.style.cssText='padding:10px;width:100%;margin-top:6px';s2.onclick=()=>refStatus(r.id);d.append(s2)}b.c.append(d)})}
 
-const UNIT_FA={finance:'واحد مالی',facilities:'واحد تاسیسات'};
-function myUnit(){const r=roleOf();return r==='finance'?'finance':r==='facilities'?'facilities':''}
+const UNIT_FA={finance:'واحد مالی',warehouse:'انبار و لجستیک',facilities:'واحد تاسیسات'};
+function myUnit(){const r=roleOf();return r==='finance'?'finance':r==='warehouse'?'warehouse':(r==='facilities'||r==='facilities_head')?'facilities':''}
 function canRefer(){const r=roleOf();return r==='sales_mgr'||r==='creator'}
 function fdate(t){try{return new Date(t).toLocaleString('fa-IR')}catch(_){return ''}}
 async function refLoad(){try{const r=await cloudReq('GET','shared/referrals.json');if(r.status===404||r.status===403&&false)return[];if(!r.ok)return null;const a=await r.json();return Array.isArray(a)?a:[]}catch(_){return null}}
@@ -1390,14 +1390,15 @@ async function referToFinance(key){
   for(let i=0;i<pg.length;i++){const r=await cloudReq('PUT','shared/ref/'+id+'/c'+i+'.png',dataU8(pg[i]),'image/png');if(!r.ok)throw new Error('آپلود قرارداد ناموفق')}
   for(let i=0;i<rs.length;i++){const r=await cloudReq('PUT','shared/ref/'+id+'/r'+i+'.jpg',dataU8(rs[i]),'image/jpeg');if(!r.ok)throw new Error('آپلود فیش ناموفق')}
   const me=userName();
-  await refMutate(a=>{a.unshift({id,no:x.number,customer:x.customer,seller:x.seller,info:refInfo(x),from:me,to:'finance',status:'pending',amount:String(amount||''),note:'',np:pg.length,nr:rs.length,ts:Date.now(),log:[{by:me,at:Date.now(),t:'ارجاع به واحد مالی همراه با فیش واریزی'}]});return a});
+  await refMutate(a=>{a.unshift({id,no:x.number,customer:x.customer,seller:x.seller,info:refInfo(x),items:itemsOf(x),from:me,to:'finance',status:'pending',amount:String(amount||''),note:'',np:pg.length,nr:rs.length,ts:Date.now(),log:[{by:me,at:Date.now(),t:'ارجاع به واحد مالی همراه با فیش واریزی'}]});return a});
   alert('به کارتابل واحد مالی ارجاع شد.');try{renderContractHistoryList()}catch(_){}
  }catch(e){alert('ارجاع انجام نشد: '+(e&&e.message||e))}
 }
 function viewReceipts(key){const x=contractHistory().find(y=>y.key===key);const b=ovBox('فیش‌های واریزی');if(!x||!(x.receipts||[]).length){b.c.textContent='فیشی ثبت نشده است.';return}x.receipts.forEach(u=>{const i=new Image();i.src=u;i.style.cssText='width:100%;margin-top:8px;border:1px solid #ccc';b.c.append(i)})}
 async function refImgs(box,r,pre,n,ext){for(let i=0;i<n;i++){try{const q=await cloudReq('GET','shared/ref/'+r.id+'/'+pre+i+'.'+ext);if(!q.ok)continue;const u=URL.createObjectURL(await q.blob()),im=new Image();im.src=u;im.style.cssText='width:100%;margin-top:6px;border:1px solid #ccc';box.append(im)}catch(_){}}}
 async function openRef(r,reload){
- if(myUnit()==='facilities')return openInfo(r);
+ if(myUnit()==='warehouse')return warehouseRef(r,reload);
+ if(myUnit()==='facilities')return facRef(r,reload);
  const me=userName(),mine=myUnit()===r.to&&r.status==='pending',b=ovBox('قرارداد '+(r.no||'')+' — '+(r.customer||''));
  const top=document.createElement('div');top.innerHTML='<div></div>';top.firstChild.textContent='مدیر فروش: '+r.seller+' | ارجاع از: '+r.from+' | به: '+UNIT_FA[r.to]+' | وضعیت: '+(r.status==='pending'?'در انتظار':'انجام شد');
  const inf=document.createElement('div');inf.style.cssText='margin-top:6px';
@@ -1409,17 +1410,37 @@ async function openRef(r,reload){
  const bar=document.createElement('div');bar.style.cssText='display:grid;gap:8px;margin-top:8px';
  const mk=(t,f)=>{const k=document.createElement('button');k.type='button';k.textContent=t;k.style.cssText='padding:10px';k.onclick=f;bar.append(k)};
  if(editable){mk('ذخیره ویرایش',async()=>{try{await refMutate(a=>{const z=a.find(y=>y.id===r.id);if(z){z.amount=am.value;z.note=nt.value;z.log.push({by:me,at:Date.now(),t:'ویرایش مبلغ/توضیحات'})}return a});alert('ذخیره شد');reload()}catch(e){alert(e.message)}});
-  if(r.to==='finance'&&r.status==='pending')mk('پردازش انجام شد و ارجاع به تاسیسات',async()=>{const t=prompt('نام کاربر تاسیسات (پیش‌فرض حسین ایمانی):','حسین ایمانی');if(!t)return;try{await refMutate(a=>{const z=a.find(y=>y.id===r.id);if(z){z.amount=am.value;z.note=nt.value;z.log.push({by:me,at:Date.now(),t:'پردازش مالی انجام شد'});z.status='done';const n=Object.assign({},z,{id:z.id+'f',to:'facilities',status:'pending',from:me,ts:Date.now(),log:z.log.concat([{by:me,at:Date.now(),t:'ارجاع به واحد تاسیسات ('+t+')'}]),src:z.id});a.unshift(n)}return a});alert('ارجاع شد');b.o.remove();reload()}catch(e){alert(e.message)}});
+  if(r.to==='finance'&&r.status==='pending')mk('پردازش انجام شد و ارجاع به انبار',async()=>{const sc='';try{await refMutate(a=>{const z=a.find(y=>y.id===r.id);if(z){z.amount=am.value;z.note=nt.value;z.log.push({by:me,at:Date.now(),t:'پردازش مالی انجام شد'});z.status='done';const n=Object.assign({},z,{id:z.id+'f',to:'warehouse',scope:sc,items:z.items||[],status:'pending',from:me,ts:Date.now(),log:z.log.concat([{by:me,at:Date.now(),t:'ارجاع به انبار و لجستیک ('+sc+')'}]),src:z.id});a.unshift(n)}return a});alert('ارجاع شد');b.o.remove();reload()}catch(e){alert(e.message)}});
   if(r.to==='facilities'&&r.status==='pending')mk('انجام شد',async()=>{try{await refMutate(a=>{const z=a.find(y=>y.id===r.id);if(z){z.status='done';z.log.push({by:me,at:Date.now(),t:'اقدام تاسیسات انجام شد'})}return a});b.o.remove();reload()}catch(e){alert(e.message)}})}
  b.c.append(bar);
  const lg=document.createElement('div');lg.style.cssText='margin-top:8px;font-size:13px;color:#444';lg.innerHTML='<b>سوابق:</b>';(r.log||[]).forEach(l=>{const d=document.createElement('div');d.textContent=fdate(l.at)+' — '+l.by+': '+l.t;lg.append(d)});b.c.append(lg);
  const ci=document.createElement('div'),ri=document.createElement('div');ci.innerHTML='<b>قرارداد:</b>';ri.innerHTML='<b>فیش‌های واریزی:</b>';b.c.append(ci,ri);
  const base=(r.src||r.id);const rr=Object.assign({},r,{id:base});refImgs(ci,rr,'c',r.np,'png');refImgs(ri,rr,'r',r.nr,'jpg')}
+function itemsOf(x){const e=contractExtract(x);return e.rows.map(r=>({name:r.name,unit:r.unit,q:r.q,brand:((catalog||[]).find(c=>c.name===r.name)||{}).brand||''}))}
+function scopeTxt(r){return r.scope||'—'}
+function itemTable(r){const t=document.createElement('div');t.style.cssText='margin-top:8px';(r.items||[]).forEach(i=>{const d=document.createElement('div');d.style.cssText='border-bottom:1px solid #eee;padding:6px 0';d.textContent=i.name+' | تعداد: '+i.q+' '+i.unit+(i.brand?' | تولیدکننده: '+i.brand:'');t.append(d)});if(!(r.items||[]).length)t.textContent='قلمی ثبت نشده است.';return t}
+function warehouseRef(r,reload){
+ const me=userName(),b=ovBox('انبار — قرارداد '+(r.no||''));
+ const h=document.createElement('div');h.textContent='محدوده نصب: '+scopeTxt(r)+' | وضعیت: '+(r.status==='pending'?'در انتظار':'انجام شد');b.c.append(h,itemTable(r));
+ if(r.to==='warehouse'&&r.status==='pending'){const k=document.createElement('button');k.type='button';k.textContent='انجام شد و ارسال به واحد تاسیسات';k.style.cssText='padding:10px;margin-top:10px;width:100%';
+  k.onclick=async()=>{try{await refMutate(a=>{const z=a.find(y=>y.id===r.id);if(z){z.status='done';z.log.push({by:me,at:Date.now(),t:'انبار انجام شد'});a.unshift({id:z.id+'g',src:z.src||z.id,no:z.no,customer:z.customer,seller:z.seller,info:z.info,items:z.items||[],scope:z.scope,np:z.np,nr:z.nr,amount:'',note:'',to:'facilities',status:'pending',from:me,assign:'',ts:Date.now(),log:z.log.concat([{by:me,at:Date.now(),t:'ارجاع به واحد تاسیسات'}])})}return a});b.o.remove();if(reload)reload()}catch(e){alert(e.message)}};b.c.append(k)}
+}
+function facRef(r,reload){
+ const me=userName(),b=ovBox('تاسیسات — قرارداد '+(r.no||'')),i=r.info||{};
+ [['نام و نام خانوادگی',i.name||r.customer],['آدرس',i.address],['شماره تماس',i.phone],['موضوع قرارداد',i.subject],['تعداد طبقات',i.floors],['تعداد واحد',i.units],['محدوده نصب',scopeTxt(r)]].forEach(z=>{const d=document.createElement('div');d.style.cssText='padding:6px 0;border-bottom:1px solid #eee';d.textContent=z[0]+': '+(z[1]||'—');b.c.append(d)});
+ b.c.append(itemTable(r));
+ if(r.to==='facilities'&&r.status==='pending'){const bar=document.createElement('div');bar.style.cssText='display:grid;gap:8px;margin-top:10px';
+  const mk=(t,f)=>{const k=document.createElement('button');k.type='button';k.textContent=t;k.style.cssText='padding:10px';k.onclick=f;bar.append(k)};
+  const upd=(t,extra)=>async()=>{try{await refMutate(a=>{const z=a.find(y=>y.id===r.id);if(z){if(extra)extra(z);z.log.push({by:me,at:Date.now(),t:t})}return a});b.o.remove();if(reload)reload()}catch(e){alert(e.message)}};
+  mk('خودم انجام می‌دهم',upd('اقدام تاسیسات انجام شد',z=>{z.status='done'}));
+  if(roleOf()==='facilities_head')mk('ارسال به کارشناس تاسیسات (سلطانی)',upd('ارجاع به کارشناس تاسیسات (سلطانی)',z=>{z.assign='سلطانی'}));
+  b.c.append(bar)}
+}
 async function openCartable(){
  const b=ovBox('کارتابل — '+userName());b.c.textContent='در حال بارگذاری...';
  const reload=async()=>{const a=await refLoad();b.c.innerHTML='';if(a===null){b.c.textContent='اتصال به سرور برقرار نشد.';return}
   const u=myUnit(),me=userName();
-  const inbox=a.filter(x=>x.to===u&&u),sent=a.filter(x=>x.from===me||x.seller===me);
+  const inbox=a.filter(x=>x.to===u&&u&&(u!=='facilities'||roleOf()==='facilities_head'||!x.assign||x.assign===me)),sent=a.filter(x=>x.from===me||x.seller===me);
   const sec=(t,l)=>{const h=document.createElement('b');h.textContent=t;h.style.cssText='display:block;margin-top:10px';b.c.append(h);if(!l.length){const e=document.createElement('div');e.textContent='موردی نیست.';e.style.color='#666';b.c.append(e)}
    l.forEach(x=>{const d=document.createElement('button');d.type='button';d.style.cssText='display:block;width:100%;text-align:right;border:1px solid #ccc;border-radius:8px;padding:10px;margin-top:6px;background:'+(x.status==='pending'&&x.to===u?'#fff4d6':'#fff');d.textContent=(x.status==='pending'?'🔴 ':'✅ ')+'قرارداد '+(x.no||'')+' — '+x.customer+' | مدیر فروش: '+x.seller+' | ارجاع از: '+x.from+' | '+UNIT_FA[x.to]+' | '+fdate(x.ts);d.onclick=()=>openRef(x,reload);b.c.append(d)})};
   if(u)sec('دریافتی ('+inbox.filter(x=>x.status==='pending').length+' کار انجام‌نشده)',inbox);
