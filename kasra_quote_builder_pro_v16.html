@@ -701,7 +701,7 @@ function saveContractRecord(n,d,c,html,pages,sig,e){
  const _all=contractHistory(),_old=_all.find(y=>String(y.number||'')===String(n||'')&&y.signed);
  if(_old&&!confirm('قرارداد شماره '+n+' قبلاً امضا شده است. جایگزین شود و امضا پاک شود؟\n(انصراف = نسخه امضاشده حفظ می‌شود)'))return true;
  const h=_all.filter(y=>String(y.number||'')!==String(n||''));
- h.unshift({key:'c'+Date.now(),number:String(n||''),date:String(d||''),customer:String(c||''),ts:Date.now(),html,pages:pages||[],sig:sig||null,e:e||null,nid:String((window.CD&&window.CD.nid)||''),phone:String((window.CD&&window.CD.phone)||'')});
+ h.unshift({key:'c'+Date.now(),number:String(n||''),date:String(d||''),customer:String(c||''),ts:Date.now(),html,pages:pages||[],sig:sig||null,e:e||null,seller:userName(),nid:String((window.CD&&window.CD.nid)||''),phone:String((window.CD&&window.CD.phone)||'')});
  const ok=safeSet(CONTRACT_HISTORY_KEY,JSON.stringify(h.slice(0,300)));if(!ok)alert('ذخیره قرارداد در بایگانی ناموفق بود (حافظه پر است).');return ok;
 }
 function contractExtract(x){
@@ -920,9 +920,9 @@ async function selfSigBlock(x,left,fy){const n=userName();if(!n)return 0;const g
  x.fillStyle='#111';x.fillText('امضا:',cx,fy-190);if(im)x.drawImage(im,cx-iw/2,fy-160,iw,hh);x.fillText(n,cx,fy+10);return bw}
 function sigFor(name){const n=String(name||'').trim();const m=load(SIGS_KEY,{});if(m&&m[n])return m[n];if(n==='وحید محمدتقی'){const el=document.querySelector('.manager-sig')||(window.opener&&window.opener.document&&window.opener.document.querySelector('.manager-sig'));if(el&&el.src)return el.src}return ''}
 
-const ALLOWED_USERS=['جواد زند','احد زمانپور','وحید محمدتقی','امید کرمی','صالح نیکرخ','نسرین روزبهی','فاطمه رحمانی','مجتبی یعقوبلو','امیرحسین حمدیان','امیر پیرعلی','شادمان','درخشان','محمدی','عباسی','علی خجیر','میرزا ابراهیمی','محمد لالانی'];
+const ALLOWED_USERS=['جواد زند','احد زمانپور','وحید محمدتقی','امید کرمی','صالح نیکرخ','نسرین روزبهی','فاطمه رحمانی','مجتبی یعقوبلو','امیرحسین حمدیان','امیر پیرعلی','شادمان','درخشان','محمدی','عباسی','علی خجیر','میرزا ابراهیمی','محمد لالانی','حسین ایمانی'];
 // دسته‌بندی کاربران: creator=سازنده، sales_mgr=مدیر فروش، ceo=مدیرعامل، support=کارشناس فروش و پشتیبان، ad=تبلیغات، finance=مالی، drivers=رانندگان، hr=منابع انسانی (بدون منو)
-const ROLE_OF={'وحید محمدتقی':'creator','جواد زند':'sales_mgr','احد زمانپور':'sales_mgr','صالح نیکرخ':'sales_mgr','امید کرمی':'sales_mgr','امیر پیرعلی':'sales_mgr','مجتبی یعقوبلو':'ceo','امیرحسین حمدیان':'support','نسرین روزبهی':'support','فاطمه رحمانی':'support','شادمان':'ad','درخشان':'ad','محمدی':'finance','عباسی':'finance','علی خجیر':'drivers','میرزا ابراهیمی':'drivers','محمد لالانی':'hr'};
+const ROLE_OF={'وحید محمدتقی':'creator','جواد زند':'sales_mgr','احد زمانپور':'sales_mgr','صالح نیکرخ':'sales_mgr','امید کرمی':'sales_mgr','امیر پیرعلی':'sales_mgr','مجتبی یعقوبلو':'ceo','امیرحسین حمدیان':'support','نسرین روزبهی':'support','فاطمه رحمانی':'support','شادمان':'ad','درخشان':'ad','محمدی':'finance','عباسی':'finance','علی خجیر':'drivers','میرزا ابراهیمی':'drivers','محمد لالانی':'hr','حسین ایمانی':'facilities'};
 
 function kMergeInto(k,arr){if(!Array.isArray(arr))return 0;const cur=load(k,[])||[];let out;if(k==='kasraVisitsV1'){const m=new Map();cur.concat(arr).forEach(x=>m.set(JSON.stringify(x),x));out=[...m.values()]}else out=bigMerge([cur,arr]);safeSet(k,JSON.stringify(out));return arr.length}
 function kKindOf(n,a){n=String(n||'');if(/contracts/.test(n))return 'kasraContractHistoryV1';if(/proformas/.test(n))return 'kasraQuoteHistoryV1';if(/visits/.test(n))return 'kasraVisitsV1';const x=(a||[])[0]||{};if(x.html||x.pages)return x.number&&x.signed!==undefined?'kasraContractHistoryV1':'kasraQuoteHistoryV1';return ''}
@@ -948,7 +948,7 @@ async function openCloudRestore(){
 function roleOf(){return ROLE_OF[userName()]||''}
 function canSeeSales(){const r=roleOf();return r==='creator'||r==='sales_mgr'||r==='ceo'}
 function canSeeVisits(){return canSeeSales()}
-function applyRoleUI(){const b=document.body.classList;b.toggle('role-creator',roleOf()==='creator');b.toggle('no-sales',!canSeeSales());b.toggle('no-visit',!canSeeVisits());b.toggle('role-none',!roleOf()||['ad','finance','drivers','hr'].indexOf(roleOf())>=0)}
+function applyRoleUI(){const b=document.body.classList;b.toggle('role-creator',roleOf()==='creator');b.toggle('no-sales',!canSeeSales());b.toggle('no-visit',!canSeeVisits());b.toggle('role-none',!roleOf()||['ad','finance','drivers','hr','facilities'].indexOf(roleOf())>=0)}
 function normName(v){return String(v||'').replace(/[\u200c\s]+/g,'').replace(/ي/g,'ی').replace(/ك/g,'ک')}
 function matchUser(v){const k=normName(v);return ALLOWED_USERS.find(n=>normName(n)===k)||''}
 function applyMySig(){try{const g=sigFor(userName());if(g)document.querySelectorAll('.manager-sig').forEach(e=>{e.src=g})}catch(_){}}
@@ -1204,7 +1204,10 @@ function renderContractHistoryList(){
   const del=document.createElement('button');del.type='button';del.textContent='حذف';
   del.onclick=()=>{if(!confirm('این قرارداد از بایگانی حذف شود؟ (تا ۱۰ دقیقه قابل ریکاوری است)'))return;trashPut('c',x);safeSet(CONTRACT_HISTORY_KEY,JSON.stringify(contractHistory().filter(y=>y.key!==x.key)));renderContractHistoryList()};
   const tr=document.createElement('button');tr.type='button';tr.textContent=x.transferred?'✅ منتقل شده (انتقال دوباره)':'انتقال به گزارش فروش';tr.onclick=()=>transferContractToSales(x.key);
-  btns.append(view,cl,tr,del);btns.querySelectorAll('button').forEach(b=>b.style.cssText='padding:10px 6px;font-size:14px;width:100%');row.append(info,btns);list.append(row);
+  const fr=document.createElement('button');fr.type='button';fr.textContent='ارجاع به واحد مالی';fr.onclick=()=>referToFinance(x.key);
+  const rc=document.createElement('button');rc.type='button';rc.textContent='مشاهده فیش‌های واریزی ('+(x.receipts||[]).length+')';rc.onclick=()=>viewReceipts(x.key);
+  btns.append(view,cl,tr);if(x.signed&&canRefer())btns.append(fr);if((x.receipts||[]).length)btns.append(rc);btns.append(del);
+  if(x.seller){info.querySelector('div').textContent+=' | مدیر فروش: '+x.seller}btns.querySelectorAll('button').forEach(b=>b.style.cssText='padding:10px 6px;font-size:14px;width:100%');row.append(info,btns);list.append(row);
  }
 }
 function __showG(h){const o=document.createElement('div');o.style.cssText='position:fixed;inset:0;z-index:100001;background:#ddd;display:flex;flex-direction:column';const c=document.createElement('button');c.type='button';c.textContent='✕ بستن مشاهده';c.style.cssText='padding:12px;font-size:16px;border:0;background:#b3261e;color:#fff;font-family:inherit';const f=document.createElement('iframe');f.style.cssText='flex:1;border:0;width:100%;background:#ddd';f.setAttribute('allow','web-share');f.srcdoc=h;c.onclick=()=>o.remove();o.appendChild(f);o.appendChild(c);document.body.appendChild(o)}
@@ -1319,9 +1322,9 @@ function backupFileName(base){const d=new Date(),p=n=>String(n).padStart(2,'0');
 function recordBackup(name,auto){try{localStorage.setItem('kasraLastBackupV1',JSON.stringify({ts:Date.now(),name:name,auto:!!auto}))}catch(_){}}
 function downloadJson(data,fn,auto){const bl=new Blob([JSON.stringify(data)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=fn;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);recordBackup(fn,auto);showLastBackup();alert('فایل بکاپ ذخیره شد.\n\nنام فایل: '+fn+'\nپسوند: .json\nمحل ذخیره: پوشه Download (دانلودها) گوشی، مگر اینکه مرورگر شما مسیر دیگری تنظیم کرده باشد.')}
 function showLastBackup(){const b=load('kasraLastBackupV1',null);const t=!b?'آخرین بکاپ: هنوز بکاپی گرفته نشده':'آخرین بکاپ: '+new Date(b.ts).toLocaleDateString('fa-IR')+' ساعت '+new Date(b.ts).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(b.auto?' (خودکار)':' (دستی)')+' — فایل: '+b.name;['qhLast','chLast'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t})}
-const APP_VERSION='1.4.6';
+const APP_VERSION='1.5.0';
 const CHANGELOG=[
-{v:'1.4.6',d:'1405/09/06',c:['شمارشگر تعداد طبقات و واحدها هم‌تراز با متن کنار خود شد','دکمه «بستن» پنجره نسخه و تغییرات به بالای پنجره منتقل شد','در تصویر گزارش وصولی‌ها و گزارش بازدیدها، نام و امضای کاربر سمت چپ درج می‌شود','ترتیب امضا در تصویرها: متن امضا، تصویر امضا، نام و نام خانوادگی']},{v:'1.4.5',d:'1405/09/06',c:['فاصله دکمه‌های افزایش و کاهش تعداد کم شد','پس از تغییر رمز، یک بار با رمز جدید وارد شوید','چیدمان دکمه‌ها در گزارش وصولی‌ها و گزارش بازدیدها اصلاح شد']},{v:'1.4.4',d:'1405/09/06',c:['کلید ابری به‌روزرسانی شد']},
+{v:'1.5.0',d:'1405/09/06',c:['اضافه شدن «کارتابل» در بالای صفحه سمت چپ','ارجاع قرارداد امضاشده همراه با فیش واریزی به واحد مالی از بایگانی قراردادها','ارجاع واحد مالی به واحد تاسیسات و نمایش سوابق هر ارجاع','اضافه شدن دسته تاسیسات (حسین ایمانی)']},{v:'1.4.6',d:'1405/09/06',c:['شمارشگر تعداد طبقات و واحدها هم‌تراز با متن کنار خود شد','دکمه «بستن» پنجره نسخه و تغییرات به بالای پنجره منتقل شد','در تصویر گزارش وصولی‌ها و گزارش بازدیدها، نام و امضای کاربر سمت چپ درج می‌شود','ترتیب امضا در تصویرها: متن امضا، تصویر امضا، نام و نام خانوادگی']},{v:'1.4.5',d:'1405/09/06',c:['فاصله دکمه‌های افزایش و کاهش تعداد کم شد','پس از تغییر رمز، یک بار با رمز جدید وارد شوید','چیدمان دکمه‌ها در گزارش وصولی‌ها و گزارش بازدیدها اصلاح شد']},{v:'1.4.4',d:'1405/09/06',c:['کلید ابری به‌روزرسانی شد']},
 {v:'1.4.3',d:'1405/09/05',c:['ورود با نام و رمز با تأیید از ابر','رمز اولیه برای کاربران جدید تغییر اجباری است','ورود بدون اینترنت با آخرین رمز همین دستگاه']},
 {v:'1.4.2',d:'1405/09/05',c:['تغییرات جزئی برای بهبود برنامه کسری']},
 {v:'1.4.1',d:'1405/09/05',c:['تغییرات جزئی برای بهبود برنامه کسری']},
@@ -1348,4 +1351,63 @@ function showChangelog(force){
  try{localStorage.setItem('kasraSeenVer',APP_VERSION)}catch(_){}
 }
 window.addEventListener('load',()=>setTimeout(()=>{try{if(localStorage.getItem('kasraSeenVer')!==APP_VERSION&&localStorage.getItem('kasraUserNameV1'))showChangelog()}catch(_){}},1500));
+/* ===== کارتابل ===== */
+const UNIT_FA={finance:'واحد مالی',facilities:'واحد تاسیسات'};
+function myUnit(){const r=roleOf();return r==='finance'?'finance':r==='facilities'?'facilities':''}
+function canRefer(){const r=roleOf();return r==='sales_mgr'||r==='creator'}
+function fdate(t){try{return new Date(t).toLocaleString('fa-IR')}catch(_){return ''}}
+async function refLoad(){try{const r=await cloudReq('GET','shared/referrals.json');if(r.status===404||r.status===403&&false)return[];if(!r.ok)return null;const a=await r.json();return Array.isArray(a)?a:[]}catch(_){return null}}
+async function refMutate(fn){const a=await refLoad();if(a===null)throw new Error('عدم دسترسی به سرور');const o=fn(a)||a;const r=await cloudReq('PUT','shared/referrals.json',new TextEncoder().encode(JSON.stringify(o)),'application/json');if(!r.ok)throw new Error('ذخیره ناموفق');return o}
+function dataU8(u){const b=atob(u.split(',')[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+function shrinkImg(file){return new Promise((ok,no)=>{const fr=new FileReader();fr.onerror=no;fr.onload=()=>{const im=new Image();im.onerror=no;im.onload=()=>{const m=1400,s=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.72))};im.src=fr.result};fr.readAsDataURL(file)})}
+function pickFiles(){return new Promise(res=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.multiple=true;i.onchange=()=>res([...i.files]);i.click()})}
+function ovBox(title){const o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2147482000;display:flex;align-items:center;justify-content:center;direction:rtl;font-family:Tahoma,Arial,sans-serif';const b=document.createElement('div');b.style.cssText='background:#fff;color:#111;border-radius:10px;padding:14px;width:94%;max-width:560px;max-height:90vh;overflow:auto;line-height:1.8';b.innerHTML='<div style="display:flex;align-items:center;gap:8px"><b style="flex:1;font-size:17px"></b><button type="button" class="ovx" style="padding:8px 14px;background:#b3261e;color:#fff;border:0;border-radius:6px">بستن</button></div><div class="ovc"></div>';b.querySelector('b').textContent=title;b.querySelector('.ovx').onclick=()=>o.remove();o.append(b);document.body.append(o);return{o,c:b.querySelector('.ovc')}}
+async function referToFinance(key){
+ const h=contractHistory(),x=h.find(y=>y.key===key);if(!x)return;
+ if(!x.signed){alert('امضای خریدار آپلود نشده است؛ ارجاع ممکن نیست.');return}
+ const files=await pickFiles();if(!files.length){alert('تصویر فیش واریزی انتخاب نشد.');return}
+ const amount=prompt('مبلغ واریزی (تومان):','');if(amount===null)return;
+ try{const rc=[];for(const f of files)rc.push(await shrinkImg(f));
+  x.receipts=(x.receipts||[]).concat(rc);x.seller=x.seller||userName();x.refAt=Date.now();safeSet(CONTRACT_HISTORY_KEY,JSON.stringify(h));
+  const id='r'+Date.now(),pg=x.pages||[],rs=x.receipts;
+  for(let i=0;i<pg.length;i++){const r=await cloudReq('PUT','shared/ref/'+id+'/c'+i+'.png',dataU8(pg[i]),'image/png');if(!r.ok)throw new Error('آپلود قرارداد ناموفق')}
+  for(let i=0;i<rs.length;i++){const r=await cloudReq('PUT','shared/ref/'+id+'/r'+i+'.jpg',dataU8(rs[i]),'image/jpeg');if(!r.ok)throw new Error('آپلود فیش ناموفق')}
+  const me=userName();
+  await refMutate(a=>{a.unshift({id,no:x.number,customer:x.customer,seller:x.seller,from:me,to:'finance',status:'pending',amount:String(amount||''),note:'',np:pg.length,nr:rs.length,ts:Date.now(),log:[{by:me,at:Date.now(),t:'ارجاع به واحد مالی همراه با فیش واریزی'}]});return a});
+  alert('به کارتابل واحد مالی ارجاع شد.');try{renderContractHistoryList()}catch(_){}
+ }catch(e){alert('ارجاع انجام نشد: '+(e&&e.message||e))}
+}
+function viewReceipts(key){const x=contractHistory().find(y=>y.key===key);const b=ovBox('فیش‌های واریزی');if(!x||!(x.receipts||[]).length){b.c.textContent='فیشی ثبت نشده است.';return}x.receipts.forEach(u=>{const i=new Image();i.src=u;i.style.cssText='width:100%;margin-top:8px;border:1px solid #ccc';b.c.append(i)})}
+async function refImgs(box,r,pre,n,ext){for(let i=0;i<n;i++){try{const q=await cloudReq('GET','shared/ref/'+r.id+'/'+pre+i+'.'+ext);if(!q.ok)continue;const u=URL.createObjectURL(await q.blob()),im=new Image();im.src=u;im.style.cssText='width:100%;margin-top:6px;border:1px solid #ccc';box.append(im)}catch(_){}}}
+async function openRef(r,reload){
+ const me=userName(),mine=myUnit()===r.to&&r.status==='pending',b=ovBox('قرارداد '+(r.no||'')+' — '+(r.customer||''));
+ const top=document.createElement('div');top.innerHTML='<div></div>';top.firstChild.textContent='مدیر فروش: '+r.seller+' | ارجاع از: '+r.from+' | به: '+UNIT_FA[r.to]+' | وضعیت: '+(r.status==='pending'?'در انتظار':'انجام شد');
+ const inf=document.createElement('div');inf.style.cssText='margin-top:6px';
+ const am=document.createElement('input');am.value=r.amount||'';am.placeholder='مبلغ واریزی';am.style.cssText='width:100%;padding:8px;margin-top:6px';
+ const nt=document.createElement('textarea');nt.value=r.note||'';nt.placeholder='توضیحات';nt.style.cssText='width:100%;padding:8px;margin-top:6px';
+ const editable=myUnit()===r.to;
+ if(!editable){am.readOnly=true;nt.readOnly=true}
+ b.c.append(top,inf,document.createTextNode('مبلغ واریزی:'),am,nt);
+ const bar=document.createElement('div');bar.style.cssText='display:grid;gap:8px;margin-top:8px';
+ const mk=(t,f)=>{const k=document.createElement('button');k.type='button';k.textContent=t;k.style.cssText='padding:10px';k.onclick=f;bar.append(k)};
+ if(editable){mk('ذخیره ویرایش',async()=>{try{await refMutate(a=>{const z=a.find(y=>y.id===r.id);if(z){z.amount=am.value;z.note=nt.value;z.log.push({by:me,at:Date.now(),t:'ویرایش مبلغ/توضیحات'})}return a});alert('ذخیره شد');reload()}catch(e){alert(e.message)}});
+  if(r.to==='finance'&&r.status==='pending')mk('پردازش انجام شد و ارجاع به تاسیسات',async()=>{const t=prompt('نام کاربر تاسیسات (پیش‌فرض حسین ایمانی):','حسین ایمانی');if(!t)return;try{await refMutate(a=>{const z=a.find(y=>y.id===r.id);if(z){z.amount=am.value;z.note=nt.value;z.log.push({by:me,at:Date.now(),t:'پردازش مالی انجام شد'});z.status='done';const n=Object.assign({},z,{id:z.id+'f',to:'facilities',status:'pending',from:me,ts:Date.now(),log:z.log.concat([{by:me,at:Date.now(),t:'ارجاع به واحد تاسیسات ('+t+')'}]),src:z.id});a.unshift(n)}return a});alert('ارجاع شد');b.o.remove();reload()}catch(e){alert(e.message)}});
+  if(r.to==='facilities'&&r.status==='pending')mk('انجام شد',async()=>{try{await refMutate(a=>{const z=a.find(y=>y.id===r.id);if(z){z.status='done';z.log.push({by:me,at:Date.now(),t:'اقدام تاسیسات انجام شد'})}return a});b.o.remove();reload()}catch(e){alert(e.message)}})}
+ b.c.append(bar);
+ const lg=document.createElement('div');lg.style.cssText='margin-top:8px;font-size:13px;color:#444';lg.innerHTML='<b>سوابق:</b>';(r.log||[]).forEach(l=>{const d=document.createElement('div');d.textContent=fdate(l.at)+' — '+l.by+': '+l.t;lg.append(d)});b.c.append(lg);
+ const ci=document.createElement('div'),ri=document.createElement('div');ci.innerHTML='<b>قرارداد:</b>';ri.innerHTML='<b>فیش‌های واریزی:</b>';b.c.append(ci,ri);
+ const base=(r.src||r.id);const rr=Object.assign({},r,{id:base});refImgs(ci,rr,'c',r.np,'png');refImgs(ri,rr,'r',r.nr,'jpg')}
+async function openCartable(){
+ const b=ovBox('کارتابل — '+userName());b.c.textContent='در حال بارگذاری...';
+ const reload=async()=>{const a=await refLoad();b.c.innerHTML='';if(a===null){b.c.textContent='اتصال به سرور برقرار نشد.';return}
+  const u=myUnit(),me=userName();
+  const inbox=a.filter(x=>x.to===u&&u),sent=a.filter(x=>x.from===me||x.seller===me);
+  const sec=(t,l)=>{const h=document.createElement('b');h.textContent=t;h.style.cssText='display:block;margin-top:10px';b.c.append(h);if(!l.length){const e=document.createElement('div');e.textContent='موردی نیست.';e.style.color='#666';b.c.append(e)}
+   l.forEach(x=>{const d=document.createElement('button');d.type='button';d.style.cssText='display:block;width:100%;text-align:right;border:1px solid #ccc;border-radius:8px;padding:10px;margin-top:6px;background:'+(x.status==='pending'&&x.to===u?'#fff4d6':'#fff');d.textContent=(x.status==='pending'?'🔴 ':'✅ ')+'قرارداد '+(x.no||'')+' — '+x.customer+' | مدیر فروش: '+x.seller+' | ارجاع از: '+x.from+' | '+UNIT_FA[x.to]+' | '+fdate(x.ts);d.onclick=()=>openRef(x,reload);b.c.append(d)})};
+  if(u)sec('دریافتی ('+inbox.filter(x=>x.status==='pending').length+' کار انجام‌نشده)',inbox);
+  if(sent.length||!u)sec('ارجاع‌های من',sent);if(!u&&roleOf()==='creator')sec('همه',a)};
+ reload()}
+async function cartBadge(){try{const u=myUnit();if(!u||!navigator.onLine)return;const a=await refLoad();if(!a)return;const n=a.filter(x=>x.to===u&&x.status==='pending').length,e=document.getElementById('cartBtn');if(e)e.dataset.n=n,e.textContent='📥 کارتابل'+(n?' ('+n+')':''),e.style.background=n?'#d93025':'#126b55'}catch(_){}}
+(function(){function add(){if(document.getElementById('cartBtn')||!userName())return;const h=document.querySelector('header');if(!h)return;h.style.position='relative';const k=document.createElement('button');k.id='cartBtn';k.type='button';k.textContent='📥 کارتابل';k.style.cssText='position:absolute;left:10px;top:10px;padding:6px 12px;background:#126b55;color:#fff;border:0;border-radius:6px;font-size:13px;font-family:inherit;z-index:5';k.onclick=openCartable;h.append(k);cartBadge()}setInterval(()=>{add();cartBadge()},60000);setTimeout(add,2500);setTimeout(add,8000)})();
+
 </script></body></html>
