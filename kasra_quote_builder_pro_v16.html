@@ -206,9 +206,35 @@ function S3A(){return localStorage.getItem('kasraS3AV1')||''}
 function S3S(){return localStorage.getItem('kasraS3SV1')||''}
 async function _hm(k,d){const K=await crypto.subtle.importKey('raw',k,{name:'HMAC',hash:'SHA-256'},false,['sign']);return new Uint8Array(await crypto.subtle.sign('HMAC',K,new TextEncoder().encode(d)))}
 async function cloudReq0(method,name,body,ct,q){q=q||'';const ph=_hx(await crypto.subtle.digest('SHA-256',body||new Uint8Array(0))),path='/'+S3B+'/Kasra/'+name.split('/').map(encodeURIComponent).join('/'),amz=new Date().toISOString().replace(/[-:]|\.\d{3}/g,''),ds=amz.slice(0,8),sh=(ct?'content-type;':'')+'host;x-amz-content-sha256;x-amz-date',can=[method,(name==='?'?'/'+S3B:path),q,(ct?'content-type:'+ct:null),'host:'+S3H,'x-amz-content-sha256:'+ph,'x-amz-date:'+amz,'',sh,ph].filter(x=>x!==null).join('\n'),sc=ds+'/us-east-1/s3/aws4_request',sts=['AWS4-HMAC-SHA256',amz,sc,_hx(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(can)))].join('\n');let k=await _hm(new TextEncoder().encode('AWS4'+S3S()),ds);k=await _hm(k,'us-east-1');k=await _hm(k,'s3');k=await _hm(k,'aws4_request');const sig=_hx(await _hm(k,sts));const hd={'x-amz-content-sha256':ph,'x-amz-date':amz,'Authorization':'AWS4-HMAC-SHA256 Credential='+S3A()+'/'+sc+', SignedHeaders='+sh+', Signature='+sig};if(ct)hd['Content-Type']=ct;return fetch('https://'+S3H+(name==='?'?'/'+S3B:path)+(q?'?'+q:''),{method,body:body||undefined,headers:hd})}
+var _s3p=null;
+function askS3Keys(){
+ if(_s3p)return _s3p;
+ _s3p=new Promise(function(res){
+  var d=document.createElement('div');
+  d.id='s3KeyBox';
+  d.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML='<div style="background:#fff;border-radius:12px;padding:18px;width:100%;max-width:380px;font-family:inherit;direction:rtl">'+
+   '<div style="font-weight:700;margin-bottom:10px">ورود کلید برنامه</div>'+
+   '<div style="font-size:13px;margin-bottom:8px">کلید را یک بار وارد کنید. فقط روی همین دستگاه ذخیره می‌شود.</div>'+
+   '<input id="s3k1" placeholder="Access Key" style="width:100%;box-sizing:border-box;padding:9px;margin-bottom:8px;direction:ltr">'+
+   '<input id="s3k2" placeholder="Secret Key" type="password" style="width:100%;box-sizing:border-box;padding:9px;margin-bottom:12px;direction:ltr">'+
+   '<button id="s3ok" style="width:100%;padding:10px;background:#f57c00;color:#fff;border:0;border-radius:8px;font-weight:700">ذخیره</button>'+
+   '<button id="s3no" style="width:100%;padding:8px;margin-top:6px;background:none;border:0;color:#666">بعداً</button></div>';
+  document.body.appendChild(d);
+  document.getElementById('s3ok').onclick=function(){
+   var a=document.getElementById('s3k1').value.trim(),b=document.getElementById('s3k2').value.trim();
+   if(!a||!b){alert('هر دو کلید را وارد کنید');return}
+   localStorage.setItem('kasraS3AV1',a);localStorage.setItem('kasraS3SV1',b);
+   d.remove();_s3p=null;res(true)};
+  document.getElementById('s3no').onclick=function(){d.remove();_s3p=null;res(false)};
+ });
+ return _s3p;
+}
 async function cloudReq(method,name,body,ct,q){
- if(!S3A()||!S3S()){if(window._kp)return new Response('',{status:401});window._kp=1;let a='',b='';try{a=(prompt('کلید برنامه را وارد کنید (۱ از ۲):')||'').trim();if(a)b=(prompt('کلید برنامه را وارد کنید (۲ از ۲):')||'').trim()}catch(_){}if(!a||!b)return new Response('',{status:401});localStorage.setItem('kasraS3AV1',a);localStorage.setItem('kasraS3SV1',b)}
- const r=await cloudReq0(method,name,body,ct,q);if(r.status===403){localStorage.removeItem('kasraS3AV1');localStorage.removeItem('kasraS3SV1');window._kp=0}return r}
+ if(!S3A()||!S3S()){if(!(await askS3Keys()))return new Response('',{status:401})}
+ const r=await cloudReq0(method,name,body,ct,q);
+ if(r.status===403){localStorage.removeItem('kasraS3AV1');localStorage.removeItem('kasraS3SV1')}
+ return r}
 async function cloudPut(name,data){const h=typeof data==='string'?data:JSON.stringify(data);if(_cLast[name]===h)return;const r=await cloudReq('PUT',name,new TextEncoder().encode(h),'application/json');if(r.ok)_cLast[name]=h;return r.ok}
 async function cloudPng(name,url){const m=/^data:image\/png;base64,(.+)$/.exec(url||'');if(!m)return;const sg=url.length+url.slice(-40);if(_cLast[name]===sg)return;const b=atob(m[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const r=await cloudReq('PUT',name,u,'image/png');if(r.ok)_cLast[name]=sg}
 async function cloudRestore(){try{if(!navigator.onLine)return;const un=localStorage.getItem('kasraUserNameV1');if(!un)return;const u=un.replace(/[^\w\u0600-\u06FF]/g,'_');if(window._rst)return;const n=k=>(load(k,[])||[]).length;if(n('kasraContractHistoryV1')||n('kasraQuoteHistoryV1')||n('kasraVisitsV1'))return;window._rst=1;let got=0;for(const [f,k] of [['contracts_signed','kasraContractHistoryV1'],['proformas','kasraQuoteHistoryV1'],['visits','kasraVisitsV1']]){let r=await cloudReq('GET','users/'+u+'/'+f+'.json');if(!r.ok)r=await cloudReq('GET',f+'_'+u+'.json');if(!r.ok)continue;const a=await r.json();if(Array.isArray(a)&&a.length){safeSet(k,JSON.stringify(a));got+=a.length}}if(got){alert('اطلاعات شما از نسخه پشتیبان بازیابی شد.');setTimeout(()=>location.reload(),1500)}}catch(_){}}
@@ -1330,8 +1356,8 @@ function backupFileName(base){const d=new Date(),p=n=>String(n).padStart(2,'0');
 function recordBackup(name,auto){try{localStorage.setItem('kasraLastBackupV1',JSON.stringify({ts:Date.now(),name:name,auto:!!auto}))}catch(_){}}
 function downloadJson(data,fn,auto){const bl=new Blob([JSON.stringify(data)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=fn;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);recordBackup(fn,auto);showLastBackup();alert('فایل بکاپ ذخیره شد.\n\nنام فایل: '+fn+'\nپسوند: .json\nمحل ذخیره: پوشه Download (دانلودها) گوشی، مگر اینکه مرورگر شما مسیر دیگری تنظیم کرده باشد.')}
 function showLastBackup(){const b=load('kasraLastBackupV1',null);const t=!b?'آخرین بکاپ: هنوز بکاپی گرفته نشده':'آخرین بکاپ: '+new Date(b.ts).toLocaleDateString('fa-IR')+' ساعت '+new Date(b.ts).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(b.auto?' (خودکار)':' (دستی)')+' — فایل: '+b.name;['qhLast','chLast'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t})}
-const APP_VERSION='1.6.2';
-const CHANGELOG=[{v:'1.6.2',d:'1405/09/07',c:['اتصال ابری مستقیم؛ کلید برنامه در دستگاه کاربر ذخیره می‌شود']},{v:'1.6.1',d:'1405/09/07',c:['اتصال ابری از طریق سرویس واسط؛ اصلاح وضعیت ارجاع']},{v:'1.5.9',d:'1405/09/07',c:['اصلاح نمایش مکرر فهرست تغییرات هنگام ویرایش پیش‌فاکتور']},
+const APP_VERSION='1.6.3';
+const CHANGELOG=[{v:'1.6.3',d:'1405/09/07',c:['کلید برنامه با فرم داخل برنامه گرفته می‌شود و پنجره‌ی مرورگر نمایش داده نمی‌شود']},{v:'1.6.2',d:'1405/09/07',c:['اتصال ابری مستقیم؛ کلید برنامه در دستگاه کاربر ذخیره می‌شود']},{v:'1.6.1',d:'1405/09/07',c:['اتصال ابری از طریق سرویس واسط؛ اصلاح وضعیت ارجاع']},{v:'1.5.9',d:'1405/09/07',c:['اصلاح نمایش مکرر فهرست تغییرات هنگام ویرایش پیش‌فاکتور']},
 {v:'1.5.8',d:'1405/09/06',c:['کارتابل و اعلانات ثابت در نوار سبز ماندند و هنگام باز و بسته شدن منو یا اعلانات جابه‌جا یا محو نمی‌شوند']},{v:'1.5.7',d:'1405/09/06',c:['کارتابل و اعلانات در نوار سبز بالا قرار گرفتند','دکمه اعلانات فقط آیکون دارد و با اعلان خوانده‌نشده قرمز می‌شود','رفع تکرار دکمه‌ها']},{v:'1.5.6',d:'1405/09/06',c:['توضیحات در هر مرحله ارجاع (مدیر فروش، مالی، انبار، تاسیسات)','زنجیره کامل: فروش، مالی، انبار، سرپرست تاسیسات، کارشناس تاسیسات','اعلان پایان کار برای همه افراد زنجیره و دکمه اعلانات کنار کارتابل']},{v:'1.5.5',d:'1405/09/07',c:['تفکیک تاسیسات به سرپرست (حسین ایمانی) و کارشناس (سلطانی)','واحد انبار و لجستیک (رهنما) بین مالی و تاسیسات با نمایش تولیدکننده و تعداد اقلام']},{v:'1.5.4',d:'1405/09/06',c:['کارتابل هنگام باز بودن صفحه‌ها به نوار بالای همان صفحه (سمت چپ) منتقل می‌شود','نمایش وضعیت فعلی ارجاع مستقیم در بایگانی قراردادها با دکمه نارنجی']},{v:'1.5.3',d:'1405/09/06',c:['نمایش وضعیت فعلی ارجاع مستقیم در بایگانی قراردادها با دکمه نارنجی','جزئیات وضعیت با زدن روی همان دکمه']},{v:'1.5.2',d:'1405/09/06',c:['اصلاح نمایش بایگانی در منوی مالی','جزئیات وضعیت ارجاع: واحد، زمان ارسال و تعداد صف قبلی']},{v:'1.5.1',d:'1405/09/06',c:['پیشوند شماره قرارداد فقط برای مدیران فروش','نمایش بایگانی برای مالی و تاسیسات','علامت ✅ و دکمه مشاهده وضعیت بعد از ارجاع','ثبت تاریخ قرارداد هنگام آپلود امضای خریدار','تاسیسات فقط اطلاعات پروژه را می‌بیند','انتقال دکمه کارتابل به زیر هدر']},{v:'1.5.0',d:'1405/09/06',c:['اضافه شدن «کارتابل» در بالای صفحه سمت چپ','ارجاع قرارداد امضاشده همراه با فیش واریزی به واحد مالی از بایگانی قراردادها','ارجاع واحد مالی به واحد تاسیسات و نمایش سوابق هر ارجاع','اضافه شدن دسته تاسیسات (حسین ایمانی)']},{v:'1.4.6',d:'1405/09/06',c:['شمارشگر تعداد طبقات و واحدها هم‌تراز با متن کنار خود شد','دکمه «بستن» پنجره نسخه و تغییرات به بالای پنجره منتقل شد','در تصویر گزارش وصولی‌ها و گزارش بازدیدها، نام و امضای کاربر سمت چپ درج می‌شود','ترتیب امضا در تصویرها: متن امضا، تصویر امضا، نام و نام خانوادگی']},{v:'1.4.5',d:'1405/09/06',c:['فاصله دکمه‌های افزایش و کاهش تعداد کم شد','پس از تغییر رمز، یک بار با رمز جدید وارد شوید','چیدمان دکمه‌ها در گزارش وصولی‌ها و گزارش بازدیدها اصلاح شد']},{v:'1.4.4',d:'1405/09/06',c:['کلید ابری به‌روزرسانی شد']},
 {v:'1.4.3',d:'1405/09/05',c:['ورود با نام و رمز با تأیید از ابر','رمز اولیه برای کاربران جدید تغییر اجباری است','ورود بدون اینترنت با آخرین رمز همین دستگاه']},
 {v:'1.4.2',d:'1405/09/05',c:['تغییرات جزئی برای بهبود برنامه کسری']},
